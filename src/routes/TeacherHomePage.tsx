@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PixelPanel } from '@/components/PixelPanel'
 import { PixelButton } from '@/components/PixelButton'
+import { SupabaseDownNotice } from '@/components/SupabaseDownNotice'
 import { BOSS_PRESETS } from '@/config/gameDefaults'
 import { useQuestionBank } from '@/hooks/useQuestionBank'
+import { useSupabaseHealth } from '@/hooks/useSupabaseHealth'
 import { DEMO_QUESTIONS } from '@/config/demoQuestions'
 import { downloadText } from '@/lib/download'
 import { clearHistory, loadHistory, removeGameRecord } from '@/lib/game/history'
@@ -46,6 +48,9 @@ export function TeacherHomePage() {
   const realtimeMode = resolveRealtimeMode()
   const isLocalHost = /^(localhost|127\.|0\.0\.0\.0|\[::1\])/i.test(window.location.hostname)
   const showOfflineWarning = realtimeMode === 'mock' && !isLocalHost
+  // 雲端專案是否活著（免費方案閒置會被暫停）
+  const health = useSupabaseHealth()
+  const supabaseDown = realtimeMode === 'supabase' && health === 'unreachable'
 
   return (
     <div className="game-surface mx-auto flex min-h-full max-w-5xl flex-col gap-6 px-4 py-8">
@@ -54,16 +59,26 @@ export function TeacherHomePage() {
         <div className="flex items-center gap-3">
           <span
             title={
-              realtimeMode === 'supabase'
-                ? '學生手機可跨裝置連線'
-                : '只有同一台電腦的多個分頁能互通'
+              realtimeMode === 'mock'
+                ? '只有同一台電腦的多個分頁能互通'
+                : supabaseDown
+                  ? 'Supabase 專案目前連不上，學生會無法加入'
+                  : '學生手機可跨裝置連線'
             }
             className={[
               'font-pixel border-[3px] border-black px-2 py-1 text-[10px]',
-              realtimeMode === 'supabase' ? 'bg-guard text-night-900' : 'bg-gold text-night-900',
+              realtimeMode === 'mock'
+                ? 'bg-gold text-night-900'
+                : supabaseDown
+                  ? 'bg-hp animate-pulse-soft text-white'
+                  : 'bg-guard text-night-900',
             ].join(' ')}
           >
-            {realtimeMode === 'supabase' ? '☁ Supabase（雲端）' : '🖥 本機模式'}
+            {realtimeMode === 'mock'
+              ? '🖥 本機模式'
+              : supabaseDown
+                ? '☁ Supabase（連線異常）'
+                : '☁ Supabase（雲端）'}
           </span>
           <Link to="/" className="font-pixel text-[10px] text-muted hover:text-ink">
             ← 回首頁
@@ -77,6 +92,8 @@ export function TeacherHomePage() {
           請確認已設定 Supabase 環境變數（部署到 Vercel 時要填在 Environment Variables）。
         </p>
       )}
+
+      {supabaseDown && <SupabaseDownNotice />}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <PixelPanel title="開新遊戲">

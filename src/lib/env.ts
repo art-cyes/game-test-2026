@@ -23,6 +23,15 @@ export const SUPABASE_ANON_KEY = (env.VITE_SUPABASE_ANON_KEY ?? '').trim()
 
 export const isSupabaseConfigured = SUPABASE_URL !== '' && SUPABASE_ANON_KEY !== ''
 
+/**
+ * Supabase 後台「這個專案」的網址。
+ * 從 Project URL 的 subdomain 取出專案 ref（例如 qrfdtklvxofjtrvdjpud）。
+ */
+export const SUPABASE_DASHBOARD_URL = (() => {
+  const ref = SUPABASE_URL.match(/^https?:\/\/([^.]+)\.supabase\.co/i)?.[1]
+  return ref ? `https://supabase.com/dashboard/project/${ref}` : 'https://supabase.com/dashboard'
+})()
+
 /** 對外網址（未設定時用瀏覽器目前的網址） */
 export const PUBLIC_URL = (env.VITE_PUBLIC_URL ?? '').trim().replace(/\/+$/, '')
 

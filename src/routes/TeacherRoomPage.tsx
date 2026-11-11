@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { PixelButton } from '@/components/PixelButton'
 import { PixelPanel } from '@/components/PixelPanel'
 import { QRCodeCard } from '@/components/QRCodeCard'
+import { SupabaseDownNotice } from '@/components/SupabaseDownNotice'
 import { DEMO_QUESTIONS } from '@/config/demoQuestions'
 import { useHostBattle } from '@/hooks/useHostBattle'
 import { useHostLobby } from '@/hooks/useHostLobby'
@@ -125,6 +126,8 @@ export function TeacherRoomPage() {
         </Link>
       </header>
 
+      {lobby.status === 'error' && <SupabaseDownNotice />}
+
       <div className="grid gap-5 lg:grid-cols-[auto_1fr]">
         <PixelPanel title="學生掃這個 QR Code 加入">
           <div className="flex flex-col items-center gap-4">
@@ -153,12 +156,23 @@ export function TeacherRoomPage() {
               lobby.awayCount ? ` · ${lobby.awayCount} 不在分頁` : ''
             }${offlineCount ? ` · ${offlineCount} 離線` : ''}）`}
             action={
-              <span className="font-pixel text-[10px] text-muted">
+              <span
+                className={[
+                  'font-pixel text-[10px]',
+                  lobby.status === 'error'
+                    ? 'text-hp'
+                    : lobby.status === 'connected'
+                      ? 'text-guard'
+                      : 'text-muted',
+                ].join(' ')}
+              >
                 {lobby.status === 'connected'
                   ? '已連線'
                   : lobby.status === 'connecting'
                     ? '連線中…'
-                    : '離線'}
+                    : lobby.status === 'error'
+                      ? '連線錯誤'
+                      : '離線'}
               </span>
             }
           >
