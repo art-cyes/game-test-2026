@@ -8,6 +8,7 @@ import { DEMO_QUESTIONS } from '@/config/demoQuestions'
 import { downloadText } from '@/lib/download'
 import { clearHistory, loadHistory, removeGameRecord } from '@/lib/game/history'
 import { computeAwards, resultFileName, resultsToCsv } from '@/lib/game/results'
+import { resolveRealtimeMode } from '@/lib/env'
 import { BOSS_DIFFICULTY_LABEL, type GameRecord } from '@/types'
 
 function formatDateTime(ms: number): string {
@@ -41,14 +42,41 @@ export function TeacherHomePage() {
     setHistory([])
   }
 
+  // 目前使用哪一種即時連線（雲端 Supabase 或本機 mock）
+  const realtimeMode = resolveRealtimeMode()
+  const isLocalHost = /^(localhost|127\.|0\.0\.0\.0|\[::1\])/i.test(window.location.hostname)
+  const showOfflineWarning = realtimeMode === 'mock' && !isLocalHost
+
   return (
     <div className="game-surface mx-auto flex min-h-full max-w-5xl flex-col gap-6 px-4 py-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-pixel text-sm text-gold sm:text-base">老師控制台</h1>
-        <Link to="/" className="font-pixel text-[10px] text-muted hover:text-ink">
-          ← 回首頁
-        </Link>
+        <div className="flex items-center gap-3">
+          <span
+            title={
+              realtimeMode === 'supabase'
+                ? '學生手機可跨裝置連線'
+                : '只有同一台電腦的多個分頁能互通'
+            }
+            className={[
+              'font-pixel border-[3px] border-black px-2 py-1 text-[10px]',
+              realtimeMode === 'supabase' ? 'bg-guard text-night-900' : 'bg-gold text-night-900',
+            ].join(' ')}
+          >
+            {realtimeMode === 'supabase' ? '☁ Supabase（雲端）' : '🖥 本機模式'}
+          </span>
+          <Link to="/" className="font-pixel text-[10px] text-muted hover:text-ink">
+            ← 回首頁
+          </Link>
+        </div>
       </header>
+
+      {showOfflineWarning && (
+        <p className="border-[3px] border-black bg-hp px-4 py-3 text-sm leading-relaxed text-white pixel-frame">
+          ⚠️ 目前是<strong>本機模式</strong>，學生手機掃 QR Code 會連不上。
+          請確認已設定 Supabase 環境變數（部署到 Vercel 時要填在 Environment Variables）。
+        </p>
+      )}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <PixelPanel title="開新遊戲">

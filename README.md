@@ -473,8 +473,13 @@ VITE_SUPABASE_ANON_KEY=你的_anon_key
 VITE_REALTIME_MODE=auto
 ```
 
-存檔後**重新啟動** `npm run dev`。首頁的「即時連線模式」應該會顯示
-`Supabase（雲端）`。
+存檔後**重新啟動** `npm run dev`。打開「老師控制台」（`/teacher`），右上角會顯示
+**☁ Supabase（雲端）**；若顯示 **🖥 本機模式**，代表環境變數沒讀到（學生手機將無法連線，
+畫面上也會出現紅色警告）。
+
+> 小提醒：後台有兩個很像的網址。請用 **Project URL**（`https://xxx.supabase.co`）。
+> 如果不小心貼到 **Data API URL**（結尾多一段 `/rest/v1/`），程式會自動修正，
+> 不影響運作。
 
 > `anon` key 是設計給前端公開使用的，寫在前端沒有問題。
 > 本專案不使用資料庫，因此沒有資料外洩疑慮。

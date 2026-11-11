@@ -4,7 +4,21 @@
 
 const env = import.meta.env
 
-export const SUPABASE_URL = (env.VITE_SUPABASE_URL ?? '').trim()
+/**
+ * 正規化 Supabase 網址：
+ * 後台有兩個容易混淆的網址 ——「Project URL」與「Data API URL」。
+ * 後者結尾會多一段 `/rest/v1/`，即時連線（Realtime）不能用，
+ * 這裡自動去掉，避免貼錯就整班連不上。
+ */
+function normalizeSupabaseUrl(raw: string): string {
+  return raw
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(/\/rest\/v1$/i, '')
+    .replace(/\/+$/, '')
+}
+
+export const SUPABASE_URL = normalizeSupabaseUrl(env.VITE_SUPABASE_URL ?? '')
 export const SUPABASE_ANON_KEY = (env.VITE_SUPABASE_ANON_KEY ?? '').trim()
 
 export const isSupabaseConfigured = SUPABASE_URL !== '' && SUPABASE_ANON_KEY !== ''
