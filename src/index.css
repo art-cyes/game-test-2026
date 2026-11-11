@@ -1,0 +1,846 @@
+@import "tailwindcss";
+
+/* ============================================================
+   像素勇者團：魔王城大作戰 — 8-bit 像素風主題
+   ============================================================ */
+
+@theme {
+  /* 夜空 / 魔王城背景 */
+  --color-night-900: #0b0718;
+  --color-night-800: #150e2b;
+  --color-night-700: #1e1440;
+  --color-night-600: #2a1c56;
+  --color-night-500: #3a2870;
+
+  /* 面板 */
+  --color-panel: #241a4a;
+  --color-panel-light: #32246a;
+
+  /* 主要色 */
+  --color-gold: #ffd23f;
+  --color-gold-dark: #c99700;
+  --color-hp: #e5484d;
+  --color-hp-dark: #8f1f24;
+  --color-mana: #4f8cff;
+  --color-guard: #43c59e;
+
+  /* 文字 */
+  --color-ink: #f4f1ff;
+  --color-muted: #a99fd0;
+
+  /* 字型 */
+  --font-pixel: "Press Start 2P", "Noto Sans TC", monospace;
+  --font-sans: "Noto Sans TC", system-ui, "Microsoft JhengHei", sans-serif;
+}
+
+/* ------------------------------------------------------------
+   基礎樣式
+   ------------------------------------------------------------ */
+
+/* 自適應根字級：
+   同時參考視窗寬度與高度，並限制在 15～22px。
+   Tailwind 的字級、間距都是 rem，所以整個介面會跟著解析度等比縮放——
+   1366×768 的舊電腦不會擠爆，1920×1080 或 4K 投影也會自動放大。 */
+html {
+  font-size: clamp(17px, min(0.62vw, 1vh) + 10px, 24px);
+}
+
+/* 投影畫面的角色尺寸也跟著視窗高度縮放（用高度控制，寬度由素材比例決定） */
+.scene-boss {
+  height: clamp(190px, 38vh, 460px);
+  width: auto;
+}
+
+/* 三位勇者直排在左側，所以每隻比魔王小一號 */
+.scene-hero {
+  height: clamp(58px, 10.5vh, 124px);
+  width: auto;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* 拉高最小字級下限（這兩個是 px 任意值，不會跟著根字級放大） */
+.text-\[10px\] {
+  font-size: 13px;
+}
+.text-\[11px\] {
+  font-size: 14px;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-night-900);
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(79, 140, 255, 0.12), transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(255, 210, 63, 0.08), transparent 45%);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 遊戲內不希望被選取文字、長按選單 */
+.game-surface {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+/* ------------------------------------------------------------
+   像素風工具類
+   ------------------------------------------------------------ */
+
+/* 像素字型（標題、數字、按鈕） */
+.font-pixel {
+  font-family: var(--font-pixel);
+}
+
+/* 關閉圖片平滑，讓像素圖保持銳利 */
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* 經典像素粗框 */
+.pixel-frame {
+  box-shadow:
+    0 0 0 3px #000,
+    0 0 0 6px var(--color-panel-light);
+}
+
+/* 內凹面板 */
+.pixel-inset {
+  box-shadow:
+    inset 0 3px 0 0 rgba(0, 0, 0, 0.45),
+    inset 0 -3px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+/* 按鈕立體感（下緣陰影，按下時位移） */
+.pixel-3d {
+  box-shadow: 0 5px 0 0 rgba(0, 0, 0, 0.55);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.pixel-3d:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.55);
+}
+
+/* 能量條動畫 */
+@keyframes hf-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.animate-pulse-soft {
+  animation: hf-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes hf-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-float {
+  animation: hf-float 2.6s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------
+   戰鬥動畫
+   ------------------------------------------------------------ */
+
+/* 傷害數字往上飄 */
+@keyframes hf-damage-float {
+  0% { opacity: 0; transform: translate(-50%, 10px) scale(0.6); }
+  15% { opacity: 1; transform: translate(-50%, -6px) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -100px) scale(1); }
+}
+.animate-damage-float {
+  animation: hf-damage-float 2.2s ease-out forwards;
+}
+
+/* 魔王被打到 */
+@keyframes hf-boss-hit {
+  0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+  30% { transform: scale(1.14) rotate(-4deg); filter: brightness(2.2); }
+  60% { transform: scale(0.95) rotate(3deg); filter: brightness(1.3); }
+  100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+}
+.animate-boss-hit {
+  animation: hf-boss-hit 0.4s ease-out;
+}
+
+/* 魔王攻擊時畫面震動 */
+@keyframes hf-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-7px, 3px); }
+  40% { transform: translate(7px, -3px); }
+  60% { transform: translate(-4px, 4px); }
+  80% { transform: translate(4px, -4px); }
+}
+.animate-shake {
+  animation: hf-shake 0.45s ease-out;
+}
+
+/* 復古掃描線 */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.18) 0 2px,
+    transparent 2px 4px
+  );
+}
+
+/* ------------------------------------------------------------
+   RPG UI（Kenney CC0 素材）
+   ------------------------------------------------------------ */
+
+/* 9-slice 面板
+   素材邊框只有 4px（2px 外框 + 2px 高光），所以 slice 取 5、
+   再放大到 12px 的邊框寬度，剛好是整數倍放大、維持像素銳利。 */
+.rpg-panel {
+  position: relative;
+  border-style: solid;
+  border-width: 12px;
+  border-image: url('/assets/ui/panel.png') 5 / 12px stretch;
+  border-image-repeat: stretch;
+  background-color: rgba(28, 19, 58, 0.94);
+  background-clip: padding-box;
+  image-rendering: pixelated;
+}
+
+/* 內凹面板：同樣的框，但底色更深 */
+.rpg-panel--inset {
+  background-color: rgba(9, 6, 22, 0.96);
+  border-image: url('/assets/ui/panel.png') 5 / 10px stretch;
+  border-width: 10px;
+}
+
+.rpg-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid rgba(255, 210, 63, 0.3);
+}
+
+.rpg-panel__title {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--color-gold);
+}
+
+/* 血條 */
+.rpg-label {
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-ink);
+}
+
+.rpg-number {
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 投影畫面用：再放大一級 */
+.rpg-label--xl {
+  font-size: 18px;
+}
+.rpg-number--xl {
+  font-size: 18px;
+}
+
+/* ------------------------------------------------------------
+   技能特效
+   ------------------------------------------------------------ */
+
+.skill-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* 護盾：藍色防護罩從地面升起 */
+.skill-fx__dome {
+  position: absolute;
+  left: 50%;
+  bottom: -6%;
+  width: 150%;
+  aspect-ratio: 2 / 1;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  border: 5px solid rgba(107, 227, 255, 0.85);
+  border-bottom: none;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(107, 227, 255, 0.5),
+    rgba(79, 140, 255, 0.22) 45%,
+    transparent 72%
+  );
+  box-shadow: 0 0 40px rgba(107, 227, 255, 0.55) inset;
+  animation: hf-dome 1100ms ease-out forwards;
+}
+
+@keyframes hf-dome {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(0.15);
+  }
+  22% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1.02);
+  }
+  70% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(1.08);
+  }
+}
+
+/* 護盾：向外擴散的環 */
+.skill-fx__ring {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  width: 120px;
+  height: 120px;
+  margin-left: -60px;
+  border-radius: 50%;
+  border: 10px solid rgba(107, 227, 255, 0.9);
+  animation: hf-ring 900ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes hf-ring {
+  0% {
+    transform: scale(0.3);
+    opacity: 1;
+    border-width: 22px;
+  }
+  100% {
+    transform: scale(8);
+    opacity: 0;
+    border-width: 3px;
+  }
+}
+
+/* 大招：全畫面閃光 */
+.skill-fx__flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 42%,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 210, 63, 0.6) 32%,
+    rgba(255, 140, 40, 0.25) 55%,
+    transparent 75%
+  );
+  animation: hf-flash 800ms ease-out forwards;
+}
+
+@keyframes hf-flash {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 大招：衝擊波 */
+.skill-fx__shock {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 140px;
+  height: 140px;
+  margin: -70px 0 0 -70px;
+  border-radius: 50%;
+  border: 14px solid rgba(255, 210, 63, 0.95);
+  box-shadow: 0 0 30px rgba(255, 180, 60, 0.8);
+  animation: hf-shock 900ms cubic-bezier(0.15, 0.7, 0.25, 1) forwards;
+}
+
+@keyframes hf-shock {
+  0% {
+    transform: scale(0.15);
+    opacity: 1;
+    border-width: 34px;
+  }
+  100% {
+    transform: scale(9);
+    opacity: 0;
+    border-width: 2px;
+  }
+}
+
+/* 大招：放射光束 */
+.skill-fx__rays {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 200%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 236, 160, 0.5) 0deg 5deg,
+    transparent 5deg 16deg
+  );
+  mask-image: radial-gradient(circle, rgba(0, 0, 0, 0.95) 12%, transparent 52%);
+  -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 0.95) 12%, transparent 52%);
+  animation: hf-rays 1000ms ease-out forwards;
+}
+
+@keyframes hf-rays {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+  }
+  20% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.15) rotate(24deg);
+  }
+}
+
+/* 斬擊弧光（每次答對都會出現） */
+@keyframes hf-slash {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--rot, -28deg)) scaleX(0.15);
+  }
+  12% {
+    opacity: 1;
+    transform: rotate(var(--rot, -28deg)) scaleX(1);
+  }
+  55% {
+    opacity: 0.95;
+    transform: rotate(var(--rot, -28deg)) scaleX(1.06);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--rot, -28deg)) scaleX(1.14);
+  }
+}
+
+.slash-arc {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 46%;
+  max-width: 420px;
+  height: 12px;
+  transform-origin: center;
+  border-radius: 50%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #ffffff 18%,
+    #fff3b8 48%,
+    #ffffff 78%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 22px 8px rgba(255, 244, 200, 0.85),
+    0 0 60px 18px rgba(255, 200, 90, 0.35);
+  animation: hf-slash 460ms cubic-bezier(0.15, 0.8, 0.25, 1) forwards;
+}
+
+.slash-arc--b {
+  height: 7px;
+  animation-duration: 560ms;
+  animation-delay: 70ms;
+  filter: hue-rotate(-18deg) brightness(1.1);
+}
+
+/* 火花碎片 */
+@keyframes hf-spark {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.2);
+  }
+}
+
+.slash-spark {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbe8 0%, #ffd23f 60%, rgba(255, 160, 40, 0) 100%);
+  animation: hf-spark 620ms cubic-bezier(0.15, 0.7, 0.3, 1) forwards;
+}
+
+/* 大招：天降光柱 */
+@keyframes hf-beam {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.3);
+  }
+  18% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1.6);
+  }
+}
+.skill-fx__beam {
+  position: absolute;
+  left: 50%;
+  top: -10%;
+  width: 26%;
+  height: 120%;
+  margin-left: -13%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 236, 160, 0.7) 35%,
+    rgba(255, 210, 63, 0.25) 70%,
+    transparent 100%
+  );
+  filter: blur(2px);
+  animation: hf-beam 900ms ease-out forwards;
+}
+
+/* 大招：先暗下來再爆閃 */
+@keyframes hf-darken {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.skill-fx__darken {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 45%, rgba(10, 4, 26, 0.2), rgba(8, 3, 20, 0.92) 75%);
+  animation: hf-darken 950ms ease-out forwards;
+}
+
+/* 大招：旋轉光環 */
+@keyframes hf-halo {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4) rotate(0deg);
+  }
+  30% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.2) rotate(160deg);
+  }
+}
+.skill-fx__halo {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 220px;
+  height: 220px;
+  border: 6px solid rgba(255, 240, 170, 0.9);
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  box-shadow: 0 0 26px rgba(255, 220, 120, 0.6);
+  animation: hf-halo 1000ms ease-out forwards;
+}
+
+/* 魔王大招：暗紅衝擊 */
+.skill-fx__boss {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(255, 60, 60, 0.55),
+    rgba(120, 10, 30, 0.5) 45%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  animation: hf-flash 900ms ease-out forwards;
+}
+
+/* 角色放招：向前衝刺 */
+@keyframes hf-cast {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-10px) scale(1.35);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-cast {
+  animation: hf-cast 700ms ease-out;
+}
+
+/* 魔王受擊：白閃 */
+@keyframes hf-hit-flash {
+  0%,
+  100% {
+    filter: none;
+  }
+  20% {
+    filter: brightness(3) saturate(0.3);
+  }
+}
+.animate-hit-flash {
+  animation: hf-hit-flash 350ms ease-out;
+}
+
+/* ------------------------------------------------------------
+   動態角色（Ninja Adventure 像素 spritesheet）
+   以 CSS steps() 逐格播放；狀態用 sprite-actor--* 修飾。
+   ------------------------------------------------------------ */
+
+.sprite-actor {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  line-height: 0;
+  image-rendering: pixelated;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.sprite-actor__sheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: calc(100% * var(--sprite-cols, 4));
+  max-width: none;
+  image-rendering: pixelated;
+  animation: sprite-play var(--sprite-dur, 0.6s) steps(var(--sprite-steps, 4)) infinite;
+}
+
+/* 一次性動作（攻擊／受擊）：播完停在最後一格 */
+.sprite-actor--once .sprite-actor__sheet {
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+/* 單格圖不需要動畫 */
+.sprite-actor--still .sprite-actor__sheet {
+  animation: none;
+}
+
+@keyframes sprite-play {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--sprite-end, -100%));
+  }
+}
+
+/* 待機：原地輕輕上下呼吸（角色 Idle 圖是四個面向，不是動畫，改用 CSS 製造生命感） */
+@keyframes sprite-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6%);
+  }
+}
+.sprite-actor--bob {
+  animation: sprite-bob 2.2s ease-in-out infinite;
+}
+
+/* 攻擊：向前（右）突刺 */
+@keyframes sprite-lunge {
+  0% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(20%);
+  }
+  55% {
+    transform: translateX(11%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.sprite-actor--lunge {
+  animation: sprite-lunge 520ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+/* 施法：金色發光 */
+.sprite-actor--cast .sprite-actor__sheet {
+  filter: brightness(1.25) drop-shadow(0 0 8px #ffe08a) drop-shadow(0 0 20px rgba(255, 200, 80, 0.85));
+}
+
+/* 受擊：紅閃 + 容器震動 */
+.sprite-actor--hurt {
+  animation: hf-shake 420ms ease-out;
+}
+.sprite-actor--hurt .sprite-actor__sheet {
+  filter: brightness(2.4) saturate(0.35) drop-shadow(0 0 9px rgba(255, 70, 70, 0.95));
+}
+
+/* 倒下：灰暗傾倒 */
+@keyframes sprite-down {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(12%) rotate(-6deg);
+    opacity: 0.45;
+  }
+}
+.sprite-actor--down {
+  animation: sprite-down 900ms ease-in forwards;
+}
+.sprite-actor--down .sprite-actor__sheet {
+  filter: grayscale(0.85) brightness(0.7);
+}
+
+.rpg-bar {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 2px solid #000;
+  background: #0b0718;
+}
+
+.rpg-bar__track,
+.rpg-bar__fill {
+  position: absolute;
+  inset: 0;
+}
+
+.rpg-bar__fill {
+  transition: width 260ms ease-out;
+}
+
+.rpg-bar--full {
+  animation: hf-pulse 1.4s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------
+   戰鬥場景背景（圖層）
+   ------------------------------------------------------------ */
+
+.rpg-scene {
+  position: relative;
+  overflow: hidden;
+}
+
+.rpg-scene__sky {
+  position: absolute;
+  inset: 0;
+}
+
+.rpg-scene__moon {
+  position: absolute;
+  right: 6%;
+  top: 8%;
+  width: 84px;
+  image-rendering: pixelated;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 18px rgba(255, 240, 200, 0.35));
+}
+
+.rpg-scene__cloud {
+  position: absolute;
+  image-rendering: pixelated;
+  opacity: 0.35;
+  animation: hf-drift linear infinite;
+}
+
+.rpg-scene__castle {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  image-rendering: pixelated;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+.rpg-scene__ground {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(20, 12, 40, 0.2) 0%, #07040f 90%);
+}
+
+@keyframes hf-drift {
+  from {
+    transform: translateX(-15vw);
+  }
+  to {
+    transform: translateX(115vw);
+  }
+}
+
+/* ------------------------------------------------------------
+   遊戲像素圖（PNG 素材）
+   ------------------------------------------------------------ */
+
+.game-sprite {
+  image-rendering: pixelated;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* 減少動態偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-soft,
+  .animate-float,
+  .animate-damage-float,
+  .animate-boss-hit,
+  .animate-shake,
+  .rpg-scene__cloud,
+  .rpg-bar--full,
+  .animate-cast,
+  .animate-hit-flash,
+  .skill-fx__dome,
+  .skill-fx__ring,
+  .skill-fx__flash,
+  .skill-fx__shock,
+  .skill-fx__rays,
+  .skill-fx__boss,
+  .skill-fx__beam,
+  .skill-fx__darken,
+  .skill-fx__halo,
+  .slash-arc,
+  .slash-spark {
+    animation: none;
+  }
+}
