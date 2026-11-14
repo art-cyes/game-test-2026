@@ -12,7 +12,7 @@ export default defineConfig({
     },
   },
   server: {
-    host: true, // 允許區網裝置連入（老師電腦當主機時可用）
+    host: true, // 允許同網段裝置連入（開發時方便用手機預覽）
     port: 5180,
   },
 })

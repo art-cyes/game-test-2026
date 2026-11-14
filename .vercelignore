@@ -1,6 +1,0 @@
-# Vercel 部署時不要上傳的東西（Vercel 會自己重新 build）
-Ninja Adventure - Asset Pack/
-node_modules
-dist
-.vercel
-*.zip

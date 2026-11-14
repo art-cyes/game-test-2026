@@ -45,7 +45,8 @@ npm run dev
 開啟 http://localhost:5180 即可看到首頁。
 
 > 開發伺服器固定使用 **5180** 埠（避免與其他專案衝突）。
-> 已設定 `host: true`，同區網的裝置可用 `http://<你的IP>:5180` 連入。
+> 已設定 `host: true`，同區網裝置可用 `http://<你的IP>:5180` 開啟畫面（開發時方便用手機預覽版面）。
+> 注意：**本機開發是 mock 模式，學生手機無法加入遊戲**；要讓學生連線請部署到 Cloudflare（見下方）。
 
 其他指令：
 
@@ -57,7 +58,7 @@ npm run lint      # 程式碼檢查
 
 ---
 
-## 即時通訊：兩種模式
+## 即時通訊：可替換的轉接層
 
 本專案把「即時通訊」抽成可替換的轉接層（`src/lib/realtime/`），
 遊戲邏輯完全不需要知道底層用什麼服務。
@@ -505,7 +506,8 @@ npm run cf:dev
 
 ## 舊版備援：Supabase（免費）
 
-正式上課時學生要用手機連線，請改用 Supabase。**完全免費，不用信用卡。**
+> 正式上課請直接用上一節的 **Cloudflare Workers**，不需要 Supabase。
+> 這一節保留給「想改回 Supabase」的情況；步驟與之前相同。
 
 ### 1. 註冊並建立專案
 
@@ -553,24 +555,6 @@ VITE_REALTIME_MODE=auto
 
 ---
 
-## 舊版備援：Vercel（免費）
-
-學生要用手機掃 QR Code，網站必須有公開網址。Vercel 免費方案即可。
-
-1. 把專案推到 GitHub
-2. 前往 <https://vercel.com>，用 GitHub 登入，點 **Add New → Project**
-3. 選擇此專案，Framework Preset 會自動偵測為 **Vite**
-4. 在 **Environment Variables** 填入 `VITE_SUPABASE_URL`、`VITE_SUPABASE_ANON_KEY`
-5. 按 **Deploy**，完成後會得到一個 `https://xxx.vercel.app` 網址
-
-之後老師端就用這個網址開遊戲、產生 QR Code 給學生掃。
-
-> 若不想用雲端，也可以在老師電腦執行 `npm run dev`（已開啟 `host: true`），
-> 讓學生連同一區網的 `http://<老師電腦IP>:5180`。
-> 但校園 WiFi 若開啟「用戶端隔離」會連不通，因此仍建議使用雲端。
-
----
-
 ## 目錄結構
 
 ```
@@ -613,10 +597,12 @@ src/
 │   │   ├── gameStore.ts     設定／玩家的本機儲存
 │   │   └── urls.ts          學生加入網址計算
 │   ├── realtime/            即時通訊轉接層
-│   │   ├── types.ts         介面與事件名稱
-│   │   ├── mockAdapter.ts   本機多分頁實作
-│   │   ├── supabaseAdapter.ts  Supabase 實作
-│   │   └── index.ts         工廠函式
+│   │   ├── types.ts          介面與事件名稱
+│   │   ├── cloudflareAdapter.ts  Cloudflare Worker 實作（正式）
+│   │   ├── mockAdapter.ts    本機多分頁實作
+│   │   ├── supabaseAdapter.ts    Supabase 實作（舊版備援）
+│   │   ├── ids.ts            連線 id 產生
+│   │   └── index.ts          工廠函式
 │   └── storage/             本機儲存（localStorage / IndexedDB / 圖片壓縮）
 ├── routes/                  各頁面（含 TeacherBankPage、BossBattleScreen、StudentBattleScreen、ResultScreen）
 └── types/index.ts           全域型別

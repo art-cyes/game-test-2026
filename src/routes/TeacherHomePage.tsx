@@ -94,7 +94,9 @@ export function TeacherHomePage() {
       {showOfflineWarning && (
         <p className="border-[3px] border-black bg-hp px-4 py-3 text-sm leading-relaxed text-white pixel-frame">
           ⚠️ 目前是<strong>本機模式</strong>，學生手機掃 QR Code 會連不上。
-          請確認已設定 Supabase 環境變數（部署到 Vercel 時要填在 Environment Variables）。
+          請確認建置時沒有把 <code className="font-pixel">VITE_REALTIME_MODE</code> 設成{' '}
+          <code className="font-pixel">mock</code>，並用 <strong>npm run deploy</strong> 部署到
+          Cloudflare。
         </p>
       )}
 
