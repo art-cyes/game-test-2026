@@ -2,10 +2,11 @@
  * 即時通訊轉接層（Realtime Adapter）
  *
  * 設計目的：把「遊戲邏輯」與「實際使用的即時服務」解耦。
- *   - SupabaseAdapter：正式上線用（雲端，學生手機可連）
- *   - MockAdapter   ：本機開發用（同一個瀏覽器的多個分頁即可互通）
+ *   - CloudflareAdapter：正式上線用（自己的 Worker + Durable Object）
+ *   - SupabaseAdapter  ：備援（Supabase Realtime）
+ *   - MockAdapter      ：本機開發用（同一個瀏覽器的多個分頁即可互通）
  *
- * 只要符合這個介面，之後要換成 WebSocket / Firebase 都不必動遊戲邏輯。
+ * 只要符合這個介面，之後要換成別的服務都不必動遊戲邏輯。
  */
 
 import type { Role } from '@/types'
@@ -43,7 +44,7 @@ export interface RealtimeAdapter {
   /** 本連線的唯一 id */
   readonly selfId: string
   /** 目前使用的實作 */
-  readonly mode: 'mock' | 'supabase'
+  readonly mode: 'mock' | 'supabase' | 'cloudflare'
   /** 目前連線狀態 */
   readonly status: ConnectionStatus
   /** 目前房間內所有成員（含自己） */

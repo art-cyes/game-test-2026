@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { PixelButton } from '@/components/PixelButton'
 import { PixelPanel } from '@/components/PixelPanel'
 import { QRCodeCard } from '@/components/QRCodeCard'
-import { SupabaseDownNotice } from '@/components/SupabaseDownNotice'
+import { RealtimeDownNotice } from '@/components/RealtimeDownNotice'
 import { DEMO_QUESTIONS } from '@/config/demoQuestions'
 import { useHostBattle } from '@/hooks/useHostBattle'
 import { useHostLobby } from '@/hooks/useHostLobby'
@@ -126,7 +126,9 @@ export function TeacherRoomPage() {
         </Link>
       </header>
 
-      {lobby.status === 'error' && <SupabaseDownNotice />}
+      {lobby.status === 'error' && (
+        <RealtimeDownNotice mode={lobby.adapter.mode === 'supabase' ? 'supabase' : 'cloudflare'} />
+      )}
 
       <div className="grid gap-5 lg:grid-cols-[auto_1fr]">
         <PixelPanel title="學生掃這個 QR Code 加入">

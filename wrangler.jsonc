@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pixel-heroes",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-09-01",
+
+  // 靜態網站（vite build 的產物）
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // 找不到的路徑回 index.html，讓 /join/XXXX 這種前端路由可以用
+    "not_found_handling": "single-page-application",
+    // 讓 Worker 有機會先處理 /ws，其餘走靜態資源
+    "run_worker_first": true
+  },
+
+  // 即時連線：每個房間一個 Durable Object
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "Room" }]
+  },
+  "migrations": [
+    // 免費方案需使用 SQLite 後端的 Durable Object
+    { "tag": "v1", "new_sqlite_classes": ["Room"] }
+  ],
+
+  "observability": { "enabled": true }
+}

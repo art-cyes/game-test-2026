@@ -19,6 +19,9 @@ Ninja Adventure - Asset Pack/
 # Vercel 本機連結資訊（依帳號/機器而異）
 .vercel
 
+# Wrangler 本機開發狀態
+.wrangler
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

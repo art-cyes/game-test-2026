@@ -35,14 +35,33 @@ export const SUPABASE_DASHBOARD_URL = (() => {
 /** 對外網址（未設定時用瀏覽器目前的網址） */
 export const PUBLIC_URL = (env.VITE_PUBLIC_URL ?? '').trim().replace(/\/+$/, '')
 
-export type RealtimeMode = 'auto' | 'mock' | 'supabase'
+export type RealtimeMode = 'auto' | 'mock' | 'supabase' | 'cloudflare'
 
 export const REALTIME_MODE: RealtimeMode =
   ((env.VITE_REALTIME_MODE ?? 'auto').trim() as RealtimeMode) || 'auto'
 
-/** 決定實際要使用的即時通訊模式 */
-export function resolveRealtimeMode(): 'mock' | 'supabase' {
+/**
+ * Cloudflare Worker 的位址（選填）。
+ * 留空 = 用目前網址（部署後前端與 Worker 同一個網域，不需要設定）。
+ * 本機想連 `wrangler dev` 時可設成 ws://localhost:8787。
+ */
+export const REALTIME_URL = (env.VITE_REALTIME_URL ?? '').trim().replace(/\/+$/, '')
+
+export type ResolvedRealtimeMode = 'mock' | 'supabase' | 'cloudflare'
+
+/**
+ * 決定實際要使用的即時通訊模式。
+ *
+ * auto（預設）的判斷順序：
+ *   1. 有設定 Supabase → supabase（保留舊部署的相容性）
+ *   2. 有設定 VITE_REALTIME_URL → cloudflare
+ *   3. 本機（localhost）→ mock，開發最方便
+ *   4. 其他（已部署的網域）→ cloudflare
+ */
+export function resolveRealtimeMode(): ResolvedRealtimeMode {
   if (REALTIME_MODE === 'mock') return 'mock'
+  if (REALTIME_MODE === 'cloudflare') return 'cloudflare'
+
   if (REALTIME_MODE === 'supabase') {
     if (!isSupabaseConfigured) {
       console.warn('[env] VITE_REALTIME_MODE=supabase 但未設定 Supabase 環境變數，改用 mock 模式。')
@@ -50,5 +69,12 @@ export function resolveRealtimeMode(): 'mock' | 'supabase' {
     }
     return 'supabase'
   }
-  return isSupabaseConfigured ? 'supabase' : 'mock'
+
+  // auto
+  if (isSupabaseConfigured) return 'supabase'
+  if (REALTIME_URL) return 'cloudflare'
+
+  const host = typeof location === 'undefined' ? '' : location.hostname
+  const isLocal = /^(localhost|127\.|0\.0\.0\.0|\[::1\]|.*\.local)$/i.test(host)
+  return isLocal ? 'mock' : 'cloudflare'
 }

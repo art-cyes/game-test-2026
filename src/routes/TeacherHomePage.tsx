@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PixelPanel } from '@/components/PixelPanel'
 import { PixelButton } from '@/components/PixelButton'
-import { SupabaseDownNotice } from '@/components/SupabaseDownNotice'
+import { RealtimeDownNotice } from '@/components/RealtimeDownNotice'
 import { BOSS_PRESETS } from '@/config/gameDefaults'
 import { useQuestionBank } from '@/hooks/useQuestionBank'
-import { useSupabaseHealth } from '@/hooks/useSupabaseHealth'
+import { useRealtimeHealth } from '@/hooks/useRealtimeHealth'
 import { DEMO_QUESTIONS } from '@/config/demoQuestions'
 import { downloadText } from '@/lib/download'
 import { clearHistory, loadHistory, removeGameRecord } from '@/lib/game/history'
@@ -48,9 +48,22 @@ export function TeacherHomePage() {
   const realtimeMode = resolveRealtimeMode()
   const isLocalHost = /^(localhost|127\.|0\.0\.0\.0|\[::1\])/i.test(window.location.hostname)
   const showOfflineWarning = realtimeMode === 'mock' && !isLocalHost
-  // 雲端專案是否活著（免費方案閒置會被暫停）
-  const health = useSupabaseHealth()
-  const supabaseDown = realtimeMode === 'supabase' && health === 'unreachable'
+  // 即時連線後端是否活著（Supabase 閒置會暫停；Cloudflare 看 Worker 是否部署成功）
+  const health = useRealtimeHealth(realtimeMode)
+  const realtimeDown = realtimeMode !== 'mock' && health === 'unreachable'
+
+  const badgeLabel =
+    realtimeMode === 'mock'
+      ? '🖥 本機模式'
+      : realtimeDown
+        ? `☁ ${realtimeMode === 'supabase' ? 'Supabase' : 'Cloudflare'}（連線異常）`
+        : `☁ ${realtimeMode === 'supabase' ? 'Supabase（雲端）' : 'Cloudflare（已連線）'}`
+  const badgeClass =
+    realtimeMode === 'mock'
+      ? 'bg-gold text-night-900'
+      : realtimeDown
+        ? 'bg-hp animate-pulse-soft text-white'
+        : 'bg-guard text-night-900'
 
   return (
     <div className="game-surface mx-auto flex min-h-full max-w-5xl flex-col gap-6 px-4 py-8">
@@ -61,24 +74,16 @@ export function TeacherHomePage() {
             title={
               realtimeMode === 'mock'
                 ? '只有同一台電腦的多個分頁能互通'
-                : supabaseDown
-                  ? 'Supabase 專案目前連不上，學生會無法加入'
+                : realtimeDown
+                  ? '即時連線伺服器目前連不上，學生會無法加入'
                   : '學生手機可跨裝置連線'
             }
             className={[
               'font-pixel border-[3px] border-black px-2 py-1 text-[10px]',
-              realtimeMode === 'mock'
-                ? 'bg-gold text-night-900'
-                : supabaseDown
-                  ? 'bg-hp animate-pulse-soft text-white'
-                  : 'bg-guard text-night-900',
+              badgeClass,
             ].join(' ')}
           >
-            {realtimeMode === 'mock'
-              ? '🖥 本機模式'
-              : supabaseDown
-                ? '☁ Supabase（連線異常）'
-                : '☁ Supabase（雲端）'}
+            {badgeLabel}
           </span>
           <Link to="/" className="font-pixel text-[10px] text-muted hover:text-ink">
             ← 回首頁
@@ -93,7 +98,9 @@ export function TeacherHomePage() {
         </p>
       )}
 
-      {supabaseDown && <SupabaseDownNotice />}
+      {realtimeDown && (
+        <RealtimeDownNotice mode={realtimeMode === 'supabase' ? 'supabase' : 'cloudflare'} />
+      )}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <PixelPanel title="開新遊戲">

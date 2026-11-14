@@ -64,8 +64,11 @@ npm run lint      # 程式碼檢查
 
 | 模式 | 說明 | 使用時機 |
 |---|---|---|
-| **mock** | 用瀏覽器內建的 BroadcastChannel，同一個瀏覽器的多個分頁可互通 | 本機開發（預設） |
-| **supabase** | 走 Supabase Realtime 雲端服務，學生手機可跨裝置連線 | 正式上課 |
+| **cloudflare** | 走自己部署的 Cloudflare Worker + Durable Object | 正式上課（預設） |
+| **mock** | 用瀏覽器內建的 BroadcastChannel，同一個瀏覽器的多個分頁可互通 | 本機開發（localhost） |
+| **supabase** | 走 Supabase Realtime 雲端服務（舊版備援） | 選用 |
+
+`VITE_REALTIME_MODE=auto`（預設）會自動判斷：本機 → mock、部署後 → cloudflare。
 
 ### 怎麼測試？
 
@@ -442,7 +445,65 @@ html { font-size: clamp(17px, min(0.62vw, 1vh) + 10px, 24px); }
 
 ---
 
-## 啟用雲端即時連線（Supabase，免費）
+## 部署到 Cloudflare Workers（推薦）
+
+**只需要一個部署**：同一個 Worker 同時提供網站與即時連線（Durable Object），
+不必再另外申請即時通訊服務，也**不需要任何環境變數**。
+
+### 1. 登入 Cloudflare（只需一次）
+
+```powershell
+cd "D:\open code\game"; npx wrangler login
+```
+
+會開啟瀏覽器請您授權，免費帳號即可。
+
+### 2. 部署
+
+```powershell
+npm run deploy
+```
+
+這會先 `vite build`，再把 `dist/` 與 Worker 一起部署。完成後會印出網址，像：
+
+```
+https://pixel-heroes.<您的子網域>.workers.dev
+```
+
+老師端就用這個網址產生 QR Code，學生掃碼即可加入。
+
+### 3. 之後要更新
+
+改完程式碼後，再跑一次 `npm run deploy` 就好。
+
+### 想在本機先測 Worker
+
+```powershell
+npm run cf:dev
+```
+
+會在 http://127.0.0.1:8787 同時提供網站與即時連線（不用登入、不影響線上）。
+
+### 運作原理
+
+| 檔案 | 作用 |
+|---|---|
+| `worker/index.ts` | Worker 入口：`/ws` 轉給 Durable Object，其餘交給靜態資源 |
+| `worker/room.ts` | 每個房間一個 Durable Object，負責轉發訊息與線上名單（用 WebSocket Hibernation，閒置不計費） |
+| `wrangler.jsonc` | 部署設定：靜態資源、SPA 轉址（讓 `/join/XXXX` 可用）、Durable Object 綁定 |
+| `src/lib/realtime/cloudflareAdapter.ts` | 前端的連線實作 |
+
+> 免費方案對一個班級非常夠用（Durable Objects 免費方案已支援）。
+> 少數情況需要調整 Worker 名稱時，改 `wrangler.jsonc` 的 `name` 即可。
+
+### 連線異常時會自動提示
+
+老師控制台會在開頁時檢查後端，連不上就顯示紅色橫幅並引導排查；
+老師房間頁的連線狀態也會顯示「已連線 / 連線中 / 連線錯誤」。
+
+---
+
+## 舊版備援：Supabase（免費）
 
 正式上課時學生要用手機連線，請改用 Supabase。**完全免費，不用信用卡。**
 
@@ -492,7 +553,7 @@ VITE_REALTIME_MODE=auto
 
 ---
 
-## 部署到網際網路（Vercel，免費）
+## 舊版備援：Vercel（免費）
 
 學生要用手機掃 QR Code，網站必須有公開網址。Vercel 免費方案即可。
 
@@ -513,6 +574,10 @@ VITE_REALTIME_MODE=auto
 ## 目錄結構
 
 ```
+worker/
+├── index.ts                 Cloudflare Worker 入口（靜態網站 + /ws 即時連線）
+└── room.ts                  每個房間的 Durable Object（轉發訊息 + 線上名單）
+
 src/
 ├── App.tsx                  路由設定
 ├── index.css                Tailwind 主題（像素風配色與工具類）
