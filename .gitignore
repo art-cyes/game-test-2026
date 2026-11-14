@@ -30,5 +30,4 @@ Ninja Adventure - Asset Pack/
 *.sln
 *.sw?
 
-.vercel
 .env*
